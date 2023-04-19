@@ -12,12 +12,12 @@ groups:
   - alert: "OS: disk space usage critical"
     expr: |
       round((( node_filesystem_size_bytes{mountpoint!~"/boot.*"} - node_filesystem_avail_bytes ) / node_filesystem_size_bytes * 100), 0.01) > 96
-    for: 5m
+    for: 1m
     labels:
       severity: critical
     annotations:
       description: "\n
-        {{ $labels.instance }}\n
+        instance: {{ $labels.instance }}\n
         mountpoint: {{ $labels.mountpoint }}\n
         free: {{ printf \"node_filesystem_avail_bytes{instance='%s',mountpoint='%s'}\" $labels.instance $labels.mountpoint | query | first | value | humanize1024 }}"
       value: "{{ $value }}%"
@@ -29,16 +29,17 @@ groups:
         and
         predict_linear(node_filesystem_avail_bytes{mountpoint!~"/boot.*"}[24h], 8*3600) < 0), 0.01
       )
-    for: 10m
+    for: 1m
     labels:
       severity: critical
     annotations:
       description: "\n
-        {{ $labels.instance }}\n
+        instance: {{ $labels.instance }}\n
         mountpoint: {{ $labels.mountpoint }}\n
         free: {{ printf \"node_filesystem_avail_bytes{instance='%s',mountpoint='%s'}\" $labels.instance $labels.mountpoint | query | first | value | humanize1024 }}\n
         will run out of disk space in less than 8h"
       value: "{{ $value }}%"
+
   - alert: High swap usage
     expr: floor((node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / node_memory_SwapTotal_bytes * 100 > 85 and delta(node_vmstat_pswpin[10m]) > 0)
     for: 2m
